@@ -23,7 +23,8 @@ require 'ohai/mixin/command'
 require 'ohai/mixin/string'
 require 'mixlib/shellout'
 
-require 'yajl'
+#require 'yajl'
+require 'multi_json'
 
 module Ohai
   class System
@@ -105,7 +106,7 @@ module Ohai
     end
     
     def hint?(name)
-      @json_parser ||= Yajl::Parser.new
+      #@json_parser ||= Yajl::Parser.new
       
       return @hints[name] if @hints[name]
       
@@ -113,9 +114,11 @@ module Ohai
         filename = File.join(path, "#{name}.json")
         if File.exist?(filename)
           begin
-            hash = @json_parser.parse(File.read(filename))
+            #hash = @json_parser.parse(File.read(filename))
+            hash = MultiJson.load(File.read(filename))
             @hints[name] = hash || Hash.new # hint should exist because the file did, even if it didn't contain anything
-          rescue Yajl::ParseError => e
+          #rescue Yajl::ParseError => e
+          rescue MultiJson::LoadError => e
             Ohai::Log.error("Could not parse hint file at #{filename}: #{e.message}")
           end
         end
@@ -231,12 +234,14 @@ module Ohai
 
     # Serialize this object as a hash
     def to_json
-      Yajl::Encoder.new.encode(@data)
+      #Yajl::Encoder.new.encode(@data)
+      MultiJson.dump(@data)
     end
 
     # Pretty Print this object as JSON
     def json_pretty_print(item=nil)
-      Yajl::Encoder.new(:pretty => true).encode(item || @data)
+      #Yajl::Encoder.new(:pretty => true).encode(item || @data)
+      JSON.pretty_generat(MultiJson.dump(item || @data))
     end
 
     def attributes_print(a)
